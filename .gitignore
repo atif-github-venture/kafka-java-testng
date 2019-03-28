@@ -1,0 +1,6 @@
+/.idea/
+/target/
+/settings.gradle
+/*.iml
+/*.ipr
+/*.iws

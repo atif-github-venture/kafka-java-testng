@@ -1,0 +1,38 @@
+{
+  "desktopmacchrome" : {
+    "browserName" : "chrome",
+    "browserVersion" : "latest",
+    "appiumVersion" : "1.8.1",
+    "sauceUserName" : "fatebamboo",
+    "sauceAccessKey" : "9099ed6e-b6ab-42d0-a2d1-76fe26985c74",
+    "sauseUrl" : "https://fatebamboo:9099ed6e-b6ab-42d0-a2d1-76fe26985c74@ondemand.saucelabs.com:443/wd/hub",
+    "driver" : "local",
+    "platform" : "mac",
+    "autoAcceptAlerts" : "no",
+    "recordVideo" : "false",
+    "videoUploadOnPass" : "false",
+    "commandTimeout" : "300",
+    "idleTimeout" : "240",
+    "driverVersion" : "233",
+    "tunnel_id" : "tunnelPool",
+    "platformVersion" : "latest",
+    "deviceOrientation" : "portrait",
+    "screenResolution" : "1280x960",
+    "deviceType" : "desktop",
+    "applicationName" : "test-victorias-secret",
+    "implicitWait" : "240",
+    "waitMultiplier" : "70",
+    "deviceName" : "Android Emulator",
+    "buildNumber" : "",
+    "jiraStory" : "",
+    "regression" : "",
+    "fewdBuild" : "false",
+    "uxApproved" : "false",
+    "fewdUrl" : "",
+    "uxBuild" : "",
+    "mockeyUrl" : "http://mockey.victoriassecret.com:8080/home",
+    "mockeyBuild" : "false",
+    "featureName" : ""
+  }
+}
+

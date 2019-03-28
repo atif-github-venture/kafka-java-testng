@@ -1,0 +1,78 @@
+group 'org.gradle.etaf'
+version '2.0'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+ext.baseUrl = 'https://artifactory.lbidts.com/artifactory/libs-release'
+
+repositories {
+    maven {
+        url baseUrl
+    }
+    mavenLocal()
+}
+
+ext.depends = [
+        log4j2Version:'2.11.1',
+        restAssuredVersion:'3.0.2'
+]
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '3.5.3'
+    testCompile group: 'org.apache.logging.log4j', name: 'log4j-api', version: depends.log4j2Version
+    testCompile group: 'org.apache.logging.log4j', name: 'log4j-core', version: depends.log4j2Version
+    testCompile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: depends.log4j2Version
+    testCompile group: 'org.apache.logging.log4j', name: 'log4j-1.2-api', version: depends.log4j2Version
+    testCompile group: 'org.testng', name: 'testng', version: '6.9.10'
+    testCompile group: 'org.raml', name: 'raml-parser-2', version: '1.0.8'
+    testCompile group: 'io.rest-assured', name: 'rest-assured', version: depends.restAssuredVersion
+    testCompile group: 'io.rest-assured', name: 'json-schema-validator', version: depends.restAssuredVersion
+    compile group: 'com.joyent.manta', name: 'java-manta-client', version: '3.2.0'
+    compile group: 'com.joyent.manta', name: 'commons-vfs-manta', version: '1.0.1'
+    testCompile group: 'org.springframework.boot', name: 'spring-boot-test', version: '1.5.2.RELEASE'
+    testCompile group: 'org.springframework', name: 'spring-web', version: '4.3.13.RELEASE'
+    testCompile group: 'com.microsoft.ews-java-api', name: 'ews-java-api', version: '2.0'
+    testCompile group: 'com.github.javafaker', name: 'javafaker', version: '0.14'
+    compile group: 'org.apache.kafka', name: 'kafka_2.12', version: '2.0.0'
+    testCompile group: 'com.eclipsesource.minimal-json', name: 'minimal-json', version: '0.9.5'
+    testCompile group: 'com.jayway.jsonpath', name: 'json-path', version: '2.4.0'
+}
+
+test {
+    useTestNG(){
+        suites("src/test/resources/testng.xml")
+        setParallel "methods"
+        setThreadCount 1
+    }
+    //makes the standard streams (err and out) visible at console when running web.tests
+    testLogging.showStandardStreams = true
+
+    // listen to events in the test execution lifecycle
+    beforeTest { descriptor ->
+        logger.lifecycle(">>> Running test: " + descriptor)
+
+    }
+    // listen to standard out and standard error of the test JVM(s)
+//    onOutput {
+//        descriptor, event = logger.lifecycle
+//        ("Test: " + descriptor + " produced standard out/err: "
+//                + event.message )
+//    }
+
+    // set a system property for the test JVM(s)
+    systemProperties System.properties
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "128m"
+    maxHeapSize = "512m"
+
+    // set JVM arguments for the test JVM(s)
+    jvmArgs '-XX:MaxPermSize=256m'
+}
+
+jar {
+    baseName = 'hybrid_etaf'
+}

@@ -1,0 +1,12 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="test suite" verbose="1">
+  <test name="testsuite">
+    <classes>
+      <class name="web.tests.SeleniumExample">
+        <methods>
+          <!--include name="testAPI"/-->
+        </methods>
+      </class>
+    </classes>
+  </test>
+</suite>
