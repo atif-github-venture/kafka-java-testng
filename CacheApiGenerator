@@ -1,0 +1,146 @@
+package com.lbrands.etaf.utilities;
+
+import static com.lbrands.etaf.constants.GlobalVariables.mockeyVSData;
+import static com.lbrands.etaf.utilities.FileHelper.readFileContent;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lbrands.etaf.pojo.mockey.MockeyScenario;
+import com.lbrands.etaf.pojo.mockey.MockeyService;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+/**
+ * <h1>This is a class containing all the methods related to XML Generator for Mockey</h1>
+ */
+
+public class CacheApiGenerator {
+
+	private static final Logger LOGGER = LogManager.getLogger(CacheApiGenerator.class);
+
+	private String baseUrl = "http://internalgatewaytest.svc.nonpci.cmh-1.cns.lbidts.com/apimockdata/v1/test";
+
+	public int index = 1;
+
+	private RestTemplate restCall = new RestTemplate();
+
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		LOGGER.info("___________Uploading the services starts to Test API Layer________");
+		CacheApiGenerator cacheApiGenerator = new CacheApiGenerator();
+		cacheApiGenerator.cacheApiDataGenerator();
+		LOGGER.info("___________Uploading the services is completed_______");
+	}
+
+	private void cacheApiDataGenerator() {
+		try {
+			Files.walk(Paths.get("./src/test/resources/data/static/mockey/services")).collect(Collectors.toList())
+					.forEach(path -> {
+						File t = path.toFile();
+						if (t.isFile()) {
+							ObjectMapper objectMapper = new ObjectMapper();
+							try {
+								String jsonFileLoc = Paths
+										.get("./src/test/resources/data/static/mockey/services/" + t.getName()).toString();
+								List<MockeyService> mockeyService = Collections.synchronizedList(
+										Arrays.asList(objectMapper.readValue(new File(jsonFileLoc), MockeyService[].class)));
+								mockeyService.forEach(service -> {
+									List<MockeyScenario> mockeyScenarioList = Collections
+											.synchronizedList(service.getScenario());
+									mockeyScenarioList.forEach(m -> {
+//										if (m.getScenario_name().equalsIgnoreCase("fate-23562-productpage.v1") && service
+//												.getService()
+//												.equalsIgnoreCase("navigations/v1")) {
+										JSONObject json = new JSONObject();
+										int statusCode = StringUtils.isEmpty(m.getStatuscode()) ?
+												200 :
+												Integer.valueOf(m.getStatuscode());
+										try {
+											json.put("code", statusCode);
+											Object actual = new JSONTokener(Objects.requireNonNull(
+													readFileContent(mockeyVSData + m.getScenario_response_file())))
+													.nextValue();
+											if (actual instanceof JSONObject) {
+												JSONObject actualJson = new JSONObject(actual.toString());
+												json.put("response", actualJson);
+											} else if (actual instanceof JSONArray) {
+												JSONArray actualJson = new JSONArray(actual.toString());
+												json.put("response", actualJson);
+											}
+//									json.put("response", actual);
+										}
+										catch (Exception e) {
+											LOGGER.error("Error while converting the JSON {}, File Name {} ", e,
+													m.getScenario_response_file());
+										}
+
+										Optional<HttpHeaders> headers = Optional.of(new HttpHeaders());
+										headers.get().add("Content-Type", "application/json;");
+										String servicePath = service.getService().replaceAll("/", "|");
+										servicePath = servicePath.endsWith("|") ?
+												servicePath.substring(0, servicePath.length() - 1) :
+												servicePath;
+
+										if (servicePath.contains("navigations")) {
+											servicePath = servicePath + "|";
+										}
+										String urlToHit = baseUrl + "/" + m.getScenario_name() + "|" + servicePath;
+										ResponseEntity<Object> responseEntity = doPost(headers.get(), urlToHit,
+												json.toString());
+										if (responseEntity.getStatusCode() == HttpStatus.OK) {
+											LOGGER.info("200 OK {}", urlToHit);
+										} else {
+											LOGGER.error("error while calling {}", json.toString());
+										}
+
+//										}
+
+									});
+								});
+
+							}
+							catch (Exception e) {
+								LOGGER.error("Error while generating XML {} for " + t.getName(), e);
+							}
+						}
+
+					});
+		}
+		catch (IOException e) {
+			LOGGER.error("Error while reading the files from target directory {}", e);
+		}
+	}
+
+	private ResponseEntity<Object> doPost(HttpHeaders headers, String uri, Object jsonBody) {
+		try {
+			return restCall.postForEntity(uri, new HttpEntity<>(jsonBody, headers), Object.class);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.out.println(uri + "\n" + jsonBody);
+			LOGGER.info("Error while post Request " + e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(StringUtils.EMPTY);
+		}
+	}
+}
